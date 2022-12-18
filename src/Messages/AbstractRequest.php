@@ -325,6 +325,42 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest i
         return $data;
     }
 
+    /**
+     * @return array
+     * @throws InvalidCreditCardException
+     * @throws InvalidRequestException
+     */
+    public function getPurchase3DHostingData(): array
+    {
+        $redirectUrl = $this->getEndpoint();
+        $this->validate('amount');
+
+        $data = array();
+        $data['clientid'] = $this->getClientId();
+        $data['oid'] = $this->getTransactionId();
+        $data['amount'] = $this->getAmount();
+        $data['currency'] = $this->getCurrencyNumeric();
+        $data['lang'] = $this->getLang();
+        $data['okUrl'] = $this->getReturnUrl();
+        $data['failUrl'] = $this->getCancelUrl();
+        $data['storetype'] = '3d_pay_hosting';
+        $data['rnd'] = $this->getRnd();
+        $data['firmaadi'] = $this->getCompanyName();
+        $data['TransId'] = '';
+
+        $data['taksit'] = "";
+        $installment = $this->getInstallment();
+        if ($installment !== null && $installment > 1) {
+            $data['taksit'] = $installment;
+        }
+
+        $signature = $this->getHash($data);
+
+        $data['hash'] = base64_encode(sha1($signature, true));
+        $data['redirectUrl'] = $redirectUrl;
+        return $data;
+    }
+
     public function getHash(array $data): string
     {
         return $data['clientid'] .

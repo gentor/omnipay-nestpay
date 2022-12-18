@@ -12,6 +12,7 @@ use Omnipay\Common\Message\ResponseInterface;
 class PurchaseRequest extends AbstractRequest
 {
     private const PAYMENT_TYPE_3D = "3d";
+    private const PAYMENT_TYPE_3D_HOSTING = "3d_pay_hosting";
 
     /**
      * @return array|mixed
@@ -19,7 +20,10 @@ class PurchaseRequest extends AbstractRequest
      */
     public function getData()
     {
-        if ($this->getPaymentMethod() === self::PAYMENT_TYPE_3D) {
+        if ($this->getPaymentMethod() === self::PAYMENT_TYPE_3D_HOSTING) {
+            $this->setAction('3d');
+            $data = $this->getPurchase3DHostingData();
+        } elseif ($this->getPaymentMethod() === self::PAYMENT_TYPE_3D) {
             $this->setAction('3d');
             $data = $this->getPurchase3DData();
         } else {
