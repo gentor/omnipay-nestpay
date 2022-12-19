@@ -6,11 +6,15 @@
 namespace Omnipay\NestPay\Messages;
 
 use Exception;
+use Omnipay\Common\Exception\InvalidResponseException;
+use Omnipay\Common\Message\ResponseInterface;
 use Omnipay\NestPay\ThreeDResponse;
 use RuntimeException;
 
 class CompletePurchaseRequest extends AbstractRequest
 {
+    private const PAYMENT_TYPE_3D_HOSTING = "3d_pay_hosting";
+
     /** @var ThreeDResponse */
     private $threeDResponse;
 
@@ -20,6 +24,9 @@ class CompletePurchaseRequest extends AbstractRequest
      */
     public function getData()
     {
+        $paymentMethod = $this->getResponseData()['storetype'] ?? null;
+        $this->setPaymentMethod($paymentMethod);
+
         $this->threeDResponse = $this->getThreeDResponse();
         if (!in_array($this->threeDResponse->getMdStatus(), [1, 2, 3, 4], false)) {
             throw new RuntimeException('3DSecure verification error');
@@ -28,9 +35,24 @@ class CompletePurchaseRequest extends AbstractRequest
         if (!$this->checkHash()) {
             throw new RuntimeException('Hash data invalid');
         }
+
         $data = $this->getCompletePurchaseParams($this->threeDResponse);
         $this->setRequestParams($data);
         return $data;
+    }
+
+    /**
+     * @param mixed $data
+     * @return ResponseInterface|AbstractResponse
+     * @throws InvalidResponseException
+     */
+    public function sendData($data)
+    {
+        if ($this->getPaymentMethod() == self::PAYMENT_TYPE_3D_HOSTING) {
+            return $this->response = $this->createResponse($this->getResponseData());
+        }
+
+        return parent::sendData($data);
     }
 
     /**

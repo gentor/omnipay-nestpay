@@ -41,9 +41,10 @@ class PurchaseRequest extends AbstractRequest
      */
     public function sendData($data)
     {
-        if ($this->getPaymentMethod() === self::PAYMENT_TYPE_3D) {
+        if (in_array($this->getPaymentMethod(), [self::PAYMENT_TYPE_3D, self::PAYMENT_TYPE_3D_HOSTING])) {
             return $this->response = $this->createResponse($data, Purchase3DResponse::class);
         }
+
         return parent::sendData($data);
     }
 

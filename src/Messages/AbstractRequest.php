@@ -9,6 +9,7 @@ use DOMDocument;
 use DOMElement;
 use Exception;
 use InvalidArgumentException;
+use Money\Currency;
 use Omnipay\Common\Exception\InvalidCreditCardException;
 use Omnipay\Common\Exception\InvalidRequestException;
 use Omnipay\Common\Exception\InvalidResponseException;
@@ -118,7 +119,6 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest i
 
             $this->document = new DOMDocument('1.0', 'UTF-8');
             $this->root = $this->document->createElement('CC5Request');
-
             foreach ($data as $id => $value) {
                 $this->root->appendChild($this->document->createElement($id, $value));
             }
@@ -325,6 +325,28 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest i
         return $data;
     }
 
+    public function get3DHostingHash(array $data): string
+    {
+        return $data['clientid'] .
+            $data['oid'] .
+            $data['amount'] .
+            $data['okUrl'] .
+            $data['failUrl'] .
+            $data['trantype'] .
+            $this->getRnd() .
+            $this->getStoreKey();
+    }
+
+    public function getCurrencyNumeric()
+    {
+        $number = parent::getCurrencyNumeric();
+        if (!is_null($number)) {
+            return str_pad($number, 3, '0', STR_PAD_LEFT);
+        }
+
+        return $number;
+    }
+
     /**
      * @return array
      * @throws InvalidCreditCardException
@@ -344,17 +366,19 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest i
         $data['okUrl'] = $this->getReturnUrl();
         $data['failUrl'] = $this->getCancelUrl();
         $data['storetype'] = '3d_pay_hosting';
+        $data['trantype'] = 'Auth';
         $data['rnd'] = $this->getRnd();
-        $data['firmaadi'] = $this->getCompanyName();
-        $data['TransId'] = '';
+        $data['refreshtime'] = $this->getTestMode() ? 10 : 0;
+//        $data['firmaadi'] = $this->getCompanyName();
+//        $data['TransId'] = '';
 
-        $data['taksit'] = "";
+//        $data['taksit'] = "";
         $installment = $this->getInstallment();
         if ($installment !== null && $installment > 1) {
             $data['taksit'] = $installment;
         }
 
-        $signature = $this->getHash($data);
+        $signature = $this->get3DHostingHash($data);
 
         $data['hash'] = base64_encode(sha1($signature, true));
         $data['redirectUrl'] = $redirectUrl;
