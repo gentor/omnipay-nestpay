@@ -17,6 +17,7 @@ class CompletePurchaseRequest extends AbstractRequest
 
     /** @var ThreeDResponse */
     private $threeDResponse;
+    private $paymentType;
 
     /**
      * @return array|mixed
@@ -24,12 +25,13 @@ class CompletePurchaseRequest extends AbstractRequest
      */
     public function getData()
     {
-        $paymentMethod = $this->getResponseData()['storetype'] ?? null;
-        $this->setPaymentMethod($paymentMethod);
+        $this->paymentType = $this->getResponseData()['storetype'] ?? null;
 
         $this->threeDResponse = $this->getThreeDResponse();
-        if (!in_array($this->threeDResponse->getMdStatus(), [1, 2, 3, 4], false)) {
-            throw new RuntimeException('3DSecure verification error');
+        if ($this->paymentType !== self::PAYMENT_TYPE_3D_HOSTING) {
+            if (!in_array($this->threeDResponse->getMdStatus(), [1, 2, 3, 4], false)) {
+                throw new RuntimeException('3DSecure verification error');
+            }
         }
 
         if (!$this->checkHash()) {
@@ -48,7 +50,7 @@ class CompletePurchaseRequest extends AbstractRequest
      */
     public function sendData($data)
     {
-        if ($this->getPaymentMethod() == self::PAYMENT_TYPE_3D_HOSTING) {
+        if ($this->paymentType == self::PAYMENT_TYPE_3D_HOSTING) {
             return $this->response = $this->createResponse($this->getResponseData());
         }
 
@@ -84,8 +86,8 @@ class CompletePurchaseRequest extends AbstractRequest
         $threeDResponse->setCurrency($responseData['currency']);
         $threeDResponse->setXid($responseData['xid']);
         $threeDResponse->setOid($responseData['oid']);
-        $threeDResponse->setCavv($responseData['cavv']);
-        $threeDResponse->setEci($responseData['eci']);
+        $threeDResponse->setCavv($responseData['cavv'] ?? null);
+        $threeDResponse->setEci($responseData['eci'] ?? null);
         $threeDResponse->setMd($responseData['md']);
         $threeDResponse->setRnd($responseData['rnd']);
         $threeDResponse->setHashParams($responseData['HASHPARAMS']);
