@@ -15,6 +15,7 @@ trait RequestTrait
         'anadolubank' => 'https://anadolusanalpos.est.com.tr',
         'hsbc' => 'https://vpos.advantage.com.tr',
         'ziraatbank' => 'https://sanalpos2.ziraatbank.com.tr',
+        'bktbank' => 'https://pgw.bkt.com.al',
         'test' => 'https://entegrasyon.asseco-see.com.tr'
     ];
 
