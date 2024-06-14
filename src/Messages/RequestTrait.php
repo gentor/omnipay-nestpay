@@ -16,7 +16,7 @@ trait RequestTrait
         'hsbc' => 'https://vpos.advantage.com.tr',
         'ziraatbank' => 'https://sanalpos2.ziraatbank.com.tr',
         'bktbank' => 'https://pgw.bkt.com.al',
-        'test' => 'https://entegrasyon.asseco-see.com.tr'
+        'test' => 'https://torus-stage-bkt.asseco-see.com.tr'
     ];
 
     protected $allowedCardBrands = [
@@ -60,6 +60,6 @@ trait RequestTrait
 
     public function getRnd(): string
     {
-        return (string)time();
+        return (string) time();
     }
 }
