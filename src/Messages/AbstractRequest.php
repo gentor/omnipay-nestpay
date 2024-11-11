@@ -319,7 +319,6 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest i
         }
 
         $signature = $this->getHash($data);
-
         $data['hash'] = base64_encode(sha1($signature, true));
         $data['redirectUrl'] = $redirectUrl;
         return $data;
@@ -369,19 +368,22 @@ abstract class AbstractRequest extends \Omnipay\Common\Message\AbstractRequest i
         $data['trantype'] = 'Auth';
         $data['rnd'] = $this->getRnd();
         $data['refreshtime'] = $this->getTestMode() ? 10 : 0;
-//        $data['firmaadi'] = $this->getCompanyName();
-//        $data['TransId'] = '';
-
-//        $data['taksit'] = "";
         $installment = $this->getInstallment();
         if ($installment !== null && $installment > 1) {
             $data['taksit'] = $installment;
         }
+        $data['hashAlgorithm'] = 'ver3';
 
-        $signature = $this->get3DHostingHash($data);
-
-        $data['hash'] = base64_encode(sha1($signature, true));
         $data['redirectUrl'] = $redirectUrl;
+        ksort($data);
+        $hashString = '';
+        foreach ($data as $value) {
+            $escapedValue = str_replace(['|', '\\'], ['\|', '\\\\'], (string) $value);
+            $hashString .= $escapedValue . '|';
+        }
+        $hashString .= $this->getStoreKey();
+        $data['hash'] = base64_encode(hash('sha512', $hashString, true));
+
         return $data;
     }
 

@@ -90,8 +90,8 @@ class CompletePurchaseRequest extends AbstractRequest
         $threeDResponse->setEci($responseData['eci'] ?? null);
         $threeDResponse->setMd($responseData['md']);
         $threeDResponse->setRnd($responseData['rnd']);
-        $threeDResponse->setHashParams($responseData['HASHPARAMS']);
-        $threeDResponse->setHashParamsVal($responseData['HASHPARAMSVAL']);
+        $threeDResponse->setHashParams(isset($responseData['HASHPARAMS']) ? $responseData['HASHPARAMS'] : null);
+        $threeDResponse->setHashParamsVal(isset($responseData['HASHPARAMSVAL']) ? $responseData['HASHPARAMSVAL'] : null);
         $threeDResponse->setHash($responseData['HASH']);
         if ($ipAddress !== null) {
             $threeDResponse->setIpAddress($ipAddress);
@@ -112,10 +112,30 @@ class CompletePurchaseRequest extends AbstractRequest
 
     private function getGeneratedHash(): string
     {
-        $hashParamsVal = $this->threeDResponse->getHashParamsVal();
+        $data = $this->getResponseData();
+        $postParams = [];
+        foreach ($data as $key => $value){
+            array_push($postParams, $key);
+        }
+
+        natcasesort($postParams);
+
+        $hashval = "";
+        foreach ($postParams as $param){
+            $paramValue = $data[$param];
+            $escapedParamValue = str_replace("|", "\\|", str_replace("\\", "\\\\", $paramValue));
+
+            $lowerParam = strtolower($param);
+            if($lowerParam != "hash" && $lowerParam != "encoding" )	{
+                $hashval = $hashval . $escapedParamValue . "|";
+            }
+        }
+
         $storeKey = $this->getStoreKey();
-        $signature = $hashParamsVal . $storeKey;
-        return base64_encode(sha1($signature, true));
+        $escapedStoreKey = str_replace("|", "\\|", str_replace("\\", "\\\\", $storeKey));
+        $hashval = $hashval . $escapedStoreKey;
+        $calculatedHashValue = hash('sha512', $hashval);
+        return  base64_encode (pack('H*',$calculatedHashValue));
     }
 
     /**
